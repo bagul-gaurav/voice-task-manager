@@ -46,6 +46,7 @@
   .screen { display: none; flex: 1; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
   .screen.active { display: flex; flex-direction: column; }
   .screen::-webkit-scrollbar { width: 0; }
+  #review { overflow: hidden; }
 
   .eyebrow { font-size: 12px; font-weight: 500; color: var(--smoke); letter-spacing: 0; }
   h1.display { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.0; color: var(--ink); letter-spacing: -0.5px; }
@@ -109,12 +110,47 @@
   .err-msg { font-size:13px; color:var(--smoke); max-width:280px; line-height:1.45; }
   .err-actions { display:flex; flex-direction:column; gap:9px; width:220px; margin-top:6px; }
 
-  /* REVIEW */
-  .review-head { padding: 12px 22px 6px; }
+  /* REVIEW — card stack */
+  .review-head { padding: 12px 22px 6px; flex: 0 0 auto; }
   .review-head .eyebrow { margin-bottom: 6px; }
   .review-sub { font-size:13px; color:var(--smoke); margin-top:7px; line-height:1.4; }
-  .review-list { display:flex; flex-direction:column; gap:14px; padding:14px 22px 150px; }
-  .rcard { background:var(--paper); border-radius:24px; padding:18px; box-shadow:var(--glow-1); position:relative; }
+
+  /* Stack area: fills the space between header and footer */
+  .card-stack { flex:1; position:relative; overflow:hidden; margin:10px 22px 4px; }
+
+  /* Cards are stacked absolutely inside the stack area */
+  .rcard { background:var(--paper); border-radius:24px; padding:18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08), var(--glow-1);
+    position:absolute; left:0; right:0; top:0; bottom:28px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    transform-origin:50% 100%;
+    will-change:transform;
+    cursor:grab; }
+  .rcard::-webkit-scrollbar { width:0; }
+  .rcard:active { cursor:grabbing; }
+  @keyframes cardRise {
+    from { transform:scale(0.95) translateY(10px); opacity:.75; }
+    to   { transform:scale(1)    translateY(0);    opacity:1; }
+  }
+  .rcard[data-depth="0"] { z-index:10; transform:scale(1) translateY(0); animation:cardRise .28s cubic-bezier(.25,.46,.45,.94); }
+  .rcard[data-depth="1"] { z-index:9;  transform:scale(0.95) translateY(12px); pointer-events:none; }
+  .rcard[data-depth="2"] { z-index:8;  transform:scale(0.90) translateY(24px); pointer-events:none; }
+
+  /* Swipe direction badges that appear on drag */
+  .swipe-badge { position:absolute; top:16px; font-size:11px; font-weight:800; letter-spacing:.06em;
+    padding:5px 12px; border-radius:50px; border:2px solid; opacity:0; pointer-events:none; z-index:20; }
+  .swipe-badge.keep { left:14px; color:#1a7a3c; border-color:#1a7a3c; transform:rotate(-8deg); }
+  .swipe-badge.nope { right:14px; color:#d1442f; border-color:#d1442f; transform:rotate(8deg); }
+
+  /* Swipe direction hint below the stack */
+  .stack-hint { position:absolute; bottom:4px; left:0; right:0; text-align:center;
+    font-size:11px; color:#c0c0c5; pointer-events:none; letter-spacing:.01em; }
+
+  /* "All reviewed" empty state inside the stack area */
+  .stack-done { display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; gap:6px; text-align:center; }
+  .stack-done-heading { font-family:var(--serif); font-size:28px; color:var(--ink); font-weight:400; margin-top:4px; }
+
   .rcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
   .rcard-title { font-size:16px; font-weight:600; color:var(--ink); line-height:1.3; flex:1; border-bottom:1px dashed #e0e0e5; padding-bottom:3px; outline:none; }
   .rcard-title:focus { border-bottom-color: var(--signal-blue); }
@@ -143,7 +179,12 @@
   .transcript-toggle { margin-top:14px; font-size:12px; color:var(--signal-blue); font-weight:500; cursor:pointer; display:flex; align-items:center; gap:5px; }
   .transcript { display:none; margin-top:10px; font-size:12.5px; color:var(--smoke); line-height:1.5; background:var(--ash); border-radius:14px; padding:12px 14px; font-style:italic; }
   .transcript.open { display:block; }
-  .review-footer { position:absolute; bottom:0; left:0; right:0; padding:16px 22px 26px; background: linear-gradient(180deg, rgba(247,247,247,0) 0%, var(--ash) 32%); display:flex; flex-direction:column; gap:9px; z-index:20; }
+
+  /* Footer — normal flex item, pinned at bottom by the parent flex column */
+  .review-footer { flex:0 0 auto; padding:10px 22px calc(18px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(247,247,247,0) 0%, var(--ash) 36%);
+    display:flex; flex-direction:column; gap:9px; }
+
   .btn-primary { width:100%; background:var(--signal-blue); color:#fff; border:none; font-family:var(--sans); font-size:15px; font-weight:600; letter-spacing:-.02em; padding:16px; border-radius:50px; cursor:pointer;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(0,122,255,.32); display:flex; align-items:center; justify-content:center; gap:8px; }
   .btn-primary .sub { font-weight:500; opacity:.85; font-size:12.5px; }
@@ -222,9 +263,9 @@
       <div class="review-head">
         <div class="eyebrow" id="reviewSource">From your recording</div>
         <h2 class="head" id="reviewTitle">Review tasks</h2>
-        <div class="review-sub">Confirm what looks right. Fields we're unsure about are <span style="color:var(--amber-text); font-weight:600;">highlighted</span> — give those a glance.</div>
+        <div class="review-sub">Swipe right to keep, left to discard. Fields we're unsure about are <span style="color:var(--amber-text); font-weight:600;">highlighted</span>.</div>
       </div>
-      <div class="review-list" id="reviewList"></div>
+      <div class="card-stack" id="stackArea"></div>
       <div class="review-footer">
         <button class="btn-primary" id="confirmAll">Confirm all</button>
         <button class="btn-ghost" id="discardBatch">Discard batch</button>
@@ -255,7 +296,8 @@ let stream = null, mediaRecorder = null, recording = false;
 let segments = [], currentChunks = [], segTimer = null, recInterval = null;
 let recSeconds = 0, recordingStartedAt = null, recMime = '';
 let lastTranscript = '';        // kept for retry
-let reviewTasks = [];           // in-memory drafts on the review screen
+let reviewTasks = [];           // task queue on the review screen
+let confirmedTasks = [];        // tasks individually confirmed via swipe-right
 
 // ---------------- DOM helpers (no innerHTML) ----------------
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -502,9 +544,10 @@ function showError(msg) {
 // ---------------- Review ----------------
 function beginReview(rawTasks, transcript) {
   reviewTasks = rawTasks.map(t => normalizeTask(t, transcript));
+  confirmedTasks = [];
   document.getElementById('reviewSource').textContent =
     'From your ' + (recSeconds ? recSeconds + 's ' : '') + 'recording';
-  renderReview();
+  renderStack();
   showScreen('review');
 }
 
@@ -534,9 +577,9 @@ function normalizeTask(t, transcript) {
   };
 }
 
-function flaggedCount() {
+function flaggedCountOf(tasks) {
   let n = 0;
-  reviewTasks.forEach(t => {
+  tasks.forEach(t => {
     if (t.due_date && t.due_confidence < CONF_THRESHOLD) n++;
     if (t.priority_confidence < CONF_THRESHOLD) n++;
     if (t.owner_confidence < CONF_THRESHOLD) n++;
@@ -554,33 +597,132 @@ function fieldRow(label, flagged) {
   return { row, val: v };
 }
 
-function renderReview() {
-  const list = document.getElementById('reviewList');
-  list.textContent = '';
-  document.getElementById('reviewTitle').textContent =
-    'Review ' + reviewTasks.length + ' task' + (reviewTasks.length === 1 ? '' : 's');
+// ---------------- Card stack ----------------
+function renderStack() {
+  const area = document.getElementById('stackArea');
+  area.textContent = '';
 
-  reviewTasks.forEach(t => list.appendChild(reviewCard(t)));
-  list.appendChild(el('div', 'empty-hint', 'Tap any field to edit. Tap ✕ to drop a task.'));
+  const allTasks = [...confirmedTasks, ...reviewTasks];
+
+  document.getElementById('reviewTitle').textContent =
+    'Review ' + allTasks.length + ' task' + (allTasks.length === 1 ? '' : 's');
 
   const btn = document.getElementById('confirmAll');
   btn.textContent = '';
-  if (reviewTasks.length === 0) { btn.textContent = 'Nothing to save'; return; }
-  btn.appendChild(document.createTextNode('Confirm all'));
-  const flagged = flaggedCount();
-  if (flagged) btn.appendChild(el('span', 'sub', ' · ' + flagged + ' need a look'));
+  if (!allTasks.length) {
+    btn.textContent = 'Nothing to save';
+  } else {
+    btn.appendChild(document.createTextNode('Confirm all'));
+    const flagged = flaggedCountOf(allTasks);
+    if (flagged) btn.appendChild(el('span', 'sub', ' · ' + flagged + ' need a look'));
+  }
+
+  if (!reviewTasks.length) {
+    const done = el('div', 'stack-done');
+    done.appendChild(el('div', 'eyebrow',
+      confirmedTasks.length + ' task' + (confirmedTasks.length === 1 ? '' : 's') + ' kept'));
+    done.appendChild(el('div', 'stack-done-heading',
+      confirmedTasks.length ? 'All reviewed' : 'All discarded'));
+    area.appendChild(done);
+    return;
+  }
+
+  // Render up to 3 cards: deepest first so top card is last in DOM (highest z-index)
+  const visible = reviewTasks.slice(0, 3);
+  for (let i = visible.length - 1; i >= 0; i--) {
+    const card = reviewCard(visible[i]);
+    card.setAttribute('data-depth', i);
+    if (i === 0) attachSwipe(card, visible[i]);
+    area.appendChild(card);
+  }
+
+  const hint = el('div', 'stack-hint', '← discard  ·  keep →');
+  area.appendChild(hint);
+}
+
+function attachSwipe(card, t) {
+  const keepBadge = el('div', 'swipe-badge keep', 'KEEP');
+  const nopeBadge = el('div', 'swipe-badge nope', 'NOPE');
+  card.appendChild(keepBadge);
+  card.appendChild(nopeBadge);
+
+  let startX = 0, startY = 0, dx = 0, dirLocked = null;
+
+  function onStart(x, y) {
+    startX = x; startY = y; dx = 0; dirLocked = null;
+    card.style.transition = 'none';
+  }
+
+  function onMove(x, y) {
+    const cx = x - startX, cy = y - startY;
+    if (!dirLocked && (Math.abs(cx) > 6 || Math.abs(cy) > 6)) {
+      dirLocked = Math.abs(cx) > Math.abs(cy) * 0.75 ? 'h' : 'v';
+    }
+    if (dirLocked === 'h') {
+      dx = cx;
+      const rot = Math.min(Math.max(dx * 0.05, -15), 15);
+      card.style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+      keepBadge.style.opacity = String(Math.max(0, Math.min(1, dx / 80)));
+      nopeBadge.style.opacity = String(Math.max(0, Math.min(1, -dx / 80)));
+    }
+  }
+
+  function onEnd() {
+    if (dirLocked === 'h' && Math.abs(dx) > 80) {
+      const keep = dx > 0;
+      const flyX = keep ? 600 : -600;
+      const rot = keep ? 20 : -20;
+      card.style.transition = 'transform .32s ease-in';
+      card.style.transform = `translateX(${flyX}px) rotate(${rot}deg)`;
+      setTimeout(() => {
+        if (keep) confirmedTasks.push(t);
+        reviewTasks = reviewTasks.filter(r => r.id !== t.id);
+        renderStack();
+      }, 300);
+    } else {
+      card.style.transition = 'transform .3s cubic-bezier(.25,.46,.45,.94)';
+      card.style.transform = '';
+      keepBadge.style.opacity = '0';
+      nopeBadge.style.opacity = '0';
+    }
+  }
+
+  // Touch — don't initiate swipe from interactive elements
+  card.addEventListener('touchstart', e => {
+    if (e.target.closest('button, input, [contenteditable="true"]')) return;
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  card.addEventListener('touchmove', e => {
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+    if (dirLocked === 'h') e.preventDefault();
+  }, { passive: false });
+
+  card.addEventListener('touchend', () => onEnd());
+
+  // Mouse (desktop testing)
+  card.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    if (e.target.closest('button, input, [contenteditable="true"]')) return;
+    onStart(e.clientX, e.clientY);
+    const mm = ev => onMove(ev.clientX, ev.clientY);
+    const mu = () => { onEnd(); window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
+    window.addEventListener('mousemove', mm);
+    window.addEventListener('mouseup', mu);
+  });
 }
 
 function reviewCard(t) {
   const card = el('div', 'rcard');
 
-  // Title + discard
+  // Title + discard button
   const top = el('div', 'rcard-top');
   const title = el('div', 'rcard-title', t.title);
   title.contentEditable = 'true';
   title.oninput = () => { t.title = title.textContent.trim(); };
   const x = el('button', 'rcard-x', '✕');
-  x.onclick = () => { reviewTasks = reviewTasks.filter(r => r.id !== t.id); renderReview(); };
+  x.title = 'Discard this task';
+  x.onclick = () => { reviewTasks = reviewTasks.filter(r => r.id !== t.id); renderStack(); };
   top.appendChild(title); top.appendChild(x);
 
   const fields = el('div', 'fields');
@@ -590,7 +732,7 @@ function reviewCard(t) {
   const due = fieldRow('Due', dueFlag);
   const dueInput = document.createElement('input');
   dueInput.type = 'date'; dueInput.value = t.due_date || '';
-  dueInput.onchange = () => { t.due_date = dueInput.value || null; t.due_label = t.due_date ? fmtDate(t.due_date) : ''; t.due_confidence = 1; renderReview(); };
+  dueInput.onchange = () => { t.due_date = dueInput.value || null; t.due_label = t.due_date ? fmtDate(t.due_date) : ''; t.due_confidence = 1; renderStack(); };
   due.val.appendChild(dueInput);
   if (dueFlag) due.val.appendChild(flagBadge());
   fields.appendChild(due.row);
@@ -601,7 +743,7 @@ function reviewCard(t) {
   const pill = el('span');
   const paint = () => { pill.className = 'prio-pill ' + (t.priority === 'high' ? 'high' : t.priority === 'medium' ? 'med' : 'low'); pill.textContent = prioLabel(t.priority); };
   paint(); pill.title = 'Tap to change';
-  pill.onclick = () => { const o = ['low', 'medium', 'high']; t.priority = o[(o.indexOf(t.priority) + 1) % 3]; t.priority_confidence = 1; renderReview(); };
+  pill.onclick = () => { const o = ['low', 'medium', 'high']; t.priority = o[(o.indexOf(t.priority) + 1) % 3]; t.priority_confidence = 1; renderStack(); };
   prio.val.appendChild(pill);
   if (prioFlag) prio.val.appendChild(flagBadge());
   fields.appendChild(prio.row);
@@ -627,7 +769,7 @@ function reviewCard(t) {
 
   card.appendChild(top); card.appendChild(fields);
 
-  // Dependency proposals (accept / reject)
+  // Dependency proposals
   t.dependencies.forEach(dep => {
     const note = el('div', 'dep-note' + (dep.accepted ? '' : ' dismissed'));
     const text = el('div', 'dep-text');
@@ -641,14 +783,14 @@ function reviewCard(t) {
     const actions = el('div', 'dep-actions');
     const link = el('button', 'dep-btn' + (dep.accepted ? ' active' : ''), dep.accepted ? 'Linked' : 'Link');
     const dismiss = el('button', 'dep-btn' + (dep.accepted ? '' : ' active'), dep.accepted ? 'Dismiss' : 'Dismissed');
-    link.onclick = () => { dep.accepted = true; renderReview(); };
-    dismiss.onclick = () => { dep.accepted = false; renderReview(); };
+    link.onclick = () => { dep.accepted = true; renderStack(); };
+    dismiss.onclick = () => { dep.accepted = false; renderStack(); };
     actions.appendChild(link); actions.appendChild(dismiss);
     note.appendChild(text); note.appendChild(actions);
     card.appendChild(note);
   });
 
-  // Transcript
+  // Transcript toggle
   const toggle = el('div', 'transcript-toggle');
   toggle.appendChild(svgIcon(P_DOC));
   toggle.appendChild(el('span', null, ' Show transcript'));
@@ -660,10 +802,11 @@ function reviewCard(t) {
 }
 
 function confirmAll() {
-  if (!reviewTasks.length) { showScreen('home'); renderHome(); return; }
+  const allToSave = [...confirmedTasks, ...reviewTasks];
+  if (!allToSave.length) { showScreen('home'); renderHome(); return; }
   const tasks = loadTasks();
   const nowISO = new Date().toISOString();
-  reviewTasks.forEach(t => {
+  allToSave.forEach(t => {
     const unverified = (t.due_date && t.due_confidence < CONF_THRESHOLD) || t.priority_confidence < CONF_THRESHOLD || t.owner_confidence < CONF_THRESHOLD;
     tasks.push({
       id: t.id,
@@ -684,13 +827,13 @@ function confirmAll() {
     });
   });
   saveTasks(tasks);
-  const n = reviewTasks.length;
-  reviewTasks = []; segments = []; lastTranscript = '';
+  const n = allToSave.length;
+  confirmedTasks = []; reviewTasks = []; segments = []; lastTranscript = '';
   showScreen('home'); renderHome();
   toast(n + ' task' + (n === 1 ? '' : 's') + ' saved');
 }
 
-function discardBatch() { reviewTasks = []; segments = []; lastTranscript = ''; showScreen('home'); renderHome(); }
+function discardBatch() { confirmedTasks = []; reviewTasks = []; segments = []; lastTranscript = ''; showScreen('home'); renderHome(); }
 
 // ---------------- Wire up ----------------
 document.getElementById('fab').onclick = startRecording;
