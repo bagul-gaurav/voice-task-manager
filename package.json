@@ -1,0 +1,10 @@
+{
+  "name": "voice-task-manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Voice-first task manager — record a spoken brain-dump, transcribe with Sarvam Saaras, extract structured tasks with Sarvam-M, review, and save.",
+  "engines": {
+    "node": ">=18"
+  }
+}
