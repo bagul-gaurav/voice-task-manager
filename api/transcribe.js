@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Empty audio body.' });
     }
 
-    const mime = req.headers['content-type'] || 'audio/webm';
+    const mime = (req.headers['content-type'] || 'audio/webm').split(';')[0].trim();
     const ext = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
 
     const form = new FormData();
