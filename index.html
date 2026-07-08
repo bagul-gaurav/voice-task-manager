@@ -39,7 +39,7 @@
       box-shadow: 0 0 0 10px #1c1c1e, 0 30px 60px rgba(0,0,0,.28); }
   }
 
-  .statusbar { height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: space-between;
+  .statusbar { height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: flex-end;
     padding: 0 26px; font-size: 13px; font-weight: 600; color: var(--ink); z-index: 5; }
   .statusbar .brand { font-size: 12px; font-weight: 600; color: var(--smoke); letter-spacing: 0; }
 
@@ -207,20 +207,84 @@
   .ic.big { width:15px; height:15px; }
   .toast { position:absolute; bottom:110px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; font-size:12.5px; font-weight:500; padding:9px 16px; border-radius:50px; z-index:40; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; }
   .toast.show { opacity:1; }
+
+  /* Sync chip in the status bar */
+  .sync-chip { display:flex; align-items:center; gap:5px; background:none; border:none; cursor:pointer;
+    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--smoke); letter-spacing:0; padding:4px 4px; }
+  .sync-chip[hidden] { display:none; }
+  .sync-chip svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.7; }
+  .sync-chip[data-state="synced"] { color:var(--signal-blue); }
+  .sync-chip[data-state="syncing"] { color:var(--smoke); }
+  .sync-chip[data-state="syncing"] svg { animation: syncSpin 1s linear infinite; }
+  @keyframes syncSpin { to { transform: rotate(360deg); } }
+  .sync-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  /* Auth bottom sheet */
+  .sheet-overlay { position:absolute; inset:0; background:rgba(0,0,0,.34); display:flex; align-items:flex-end; z-index:60; }
+  .sheet-overlay[hidden] { display:none; }
+  .sheet { width:100%; background:var(--paper); border-radius:28px 28px 0 0;
+    padding:10px 22px calc(26px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 30px rgba(0,0,0,.18); animation: sheetUp .28s cubic-bezier(.25,.46,.45,.94); }
+  @keyframes sheetUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .sheet-grip { width:38px; height:4px; border-radius:2px; background:#e0e0e5; margin:2px auto 16px; }
+  .sheet-title { font-family:var(--serif); font-size:26px; font-weight:400; color:var(--ink); margin-bottom:8px; line-height:1.05; }
+  .sheet-sub { font-size:13px; color:var(--smoke); line-height:1.45; margin-bottom:16px; }
+  .sheet-input { width:100%; font-family:var(--sans); font-size:16px; color:var(--ink); border:1.5px solid #e0e0e5;
+    border-radius:14px; padding:13px 15px; margin-bottom:12px; outline:none; letter-spacing:-.02em; }
+  .sheet-input:focus { border-color:var(--signal-blue); }
+  .sheet .btn-text { margin-top:6px; }
+
+  /* Day-view toggle */
+  .view-toggle { display:inline-flex; background:#ececee; border-radius:50px; padding:3px; margin-top:14px; gap:2px; }
+  .vt-btn { border:none; background:none; font-family:var(--sans); font-size:12.5px; font-weight:600; color:var(--smoke);
+    letter-spacing:-.01em; padding:6px 15px; border-radius:50px; cursor:pointer; transition: all .15s; }
+  .vt-btn.active { background:var(--paper); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.09); }
+
+  /* Agenda day dividers */
+  .day-head { display:flex; align-items:baseline; gap:8px; margin:20px 0 2px; }
+  .day-head:first-child { margin-top:4px; }
+  .day-head .dh-label { font-size:12px; font-weight:700; color:var(--ink); letter-spacing:.04em; text-transform:uppercase; }
+  .day-head .dh-date { font-size:11.5px; color:var(--smoke); }
+  .day-head.overdue .dh-label { color:#d1442f; }
+  .chip.overdue-chip { background:#ffece9; color:#d1442f; }
+
+  .done-toggle { display:flex; align-items:center; gap:5px; margin:24px 0 2px; font-size:12px; font-weight:600;
+    color:var(--smoke); cursor:pointer; user-select:none; }
+  .done-toggle svg { width:12px; height:12px; fill:currentColor; }
+
+  /* Task detail sheet */
+  .ts-title { font-family:var(--serif); font-size:24px; font-weight:400; color:var(--ink); line-height:1.15;
+    margin-bottom:14px; outline:none; border-bottom:1px dashed transparent; padding-bottom:2px; }
+  .ts-title:focus { border-bottom-color:var(--signal-blue); }
+  .ts-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid #f0f0f2; }
+  .ts-label { font-size:12px; color:var(--smoke); width:66px; flex:0 0 66px; }
+  .ts-date { font-family:var(--sans); font-size:14px; color:var(--graphite); border:1px solid #e5e5ea;
+    border-radius:10px; padding:7px 10px; background:#fff; letter-spacing:-.02em; }
+  .ts-clear { background:none; border:none; color:var(--signal-blue); font-family:var(--sans); font-size:12.5px;
+    font-weight:600; cursor:pointer; margin-left:auto; }
+  .ts-actions { display:flex; flex-direction:column; gap:9px; margin-top:20px; }
+
+  [hidden] { display:none !important; }
 </style>
 </head>
 <body>
   <div class="app">
     <div class="statusbar">
-      <span id="clock">—</span>
-      <span class="brand">Voice Tasks</span>
+      <button class="sync-chip" id="syncBtn" data-state="off" hidden>
+        <svg viewBox="0 0 24 24"><path d="M7 18a4.2 4.2 0 0 1-.5-8.37 5.5 5.5 0 0 1 10.55-1.13A4 4 0 0 1 17 18H7z" stroke-linejoin="round"/></svg>
+        <span id="syncLabel">Sync</span>
+      </button>
     </div>
 
     <!-- HOME -->
     <section class="screen active" id="home">
       <div class="home-head">
         <div class="eyebrow" id="homeDate">Today</div>
-        <h1 class="display">Today</h1>
+        <h1 class="display" id="homeTitle">Agenda</h1>
+        <div class="view-toggle" id="viewToggle">
+          <button class="vt-btn active" data-view="agenda">Agenda</button>
+          <button class="vt-btn" data-view="unscheduled">Unscheduled</button>
+        </div>
       </div>
       <div id="homeBody" class="tasklist"></div>
       <div class="home-fade"></div>
@@ -287,9 +351,60 @@
       </div>
     </section>
 
+    <!-- AUTH SHEET -->
+    <div class="sheet-overlay" id="authSheet" hidden>
+      <div class="sheet">
+        <div class="sheet-grip"></div>
+
+        <div id="authSignedOut">
+          <h2 class="sheet-title">Sync across devices</h2>
+          <p class="sheet-sub">Enter your email and we'll send a magic link. Open it on any device to see the same tasks — no password.</p>
+          <input id="authEmail" class="sheet-input" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="you@email.com" />
+          <button class="btn-primary" id="authSend">Send magic link</button>
+          <button class="btn-text" id="authCancel">Not now</button>
+        </div>
+
+        <div id="authSent" hidden>
+          <h2 class="sheet-title">Check your email</h2>
+          <p class="sheet-sub" id="authSentMsg">We sent you a link.</p>
+          <button class="btn-primary" id="authSentClose">Done</button>
+        </div>
+
+        <div id="authSignedIn" hidden>
+          <h2 class="sheet-title">Synced</h2>
+          <p class="sheet-sub" id="authWho">Signed in.</p>
+          <button class="btn-ghost" id="authSignout">Sign out</button>
+          <button class="btn-text" id="authCloseIn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK DETAIL SHEET -->
+    <div class="sheet-overlay" id="taskSheet" hidden>
+      <div class="sheet">
+        <div class="sheet-grip"></div>
+        <div class="ts-title" id="tsTitle" contenteditable="true"></div>
+        <div class="ts-row">
+          <span class="ts-label">Day</span>
+          <input type="date" id="tsDate" class="ts-date" />
+          <button class="ts-clear" id="tsClear">Clear</button>
+        </div>
+        <div class="ts-row">
+          <span class="ts-label">Priority</span>
+          <span class="prio-pill" id="tsPrio">Medium</span>
+        </div>
+        <div class="ts-actions">
+          <button class="btn-primary" id="tsDone">Mark done</button>
+          <button class="btn-ghost danger" id="tsDelete">Delete task</button>
+          <button class="btn-text" id="tsClose">Close</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 "use strict";
 
@@ -299,8 +414,16 @@ const SEGMENT_MS = 25000;      // Sarvam REST STT caps ~30s; record in 25s segme
 const SOFT_CAP_S = 600;        // 10 min — gentle nudge
 const HARD_CAP_S = 3600;       // 60 min — auto-stop
 const STORE_KEY = 'vtm.tasks';
+const QUEUE_KEY = 'vtm.syncqueue';
 const WAV_TARGET_SR = 16000;   // 16 kHz mono is ample for speech and keeps uploads small
 const WAV_CHUNK_S = 25;        // hard-slice decoded audio so no upload can exceed Sarvam's 30s cap
+
+// ---------------- Cross-device sync (Supabase) ----------------
+// The publishable key is safe in the browser: Row Level Security limits every
+// query to the signed-in user's own rows. The Sarvam key stays server-side.
+const SUPABASE_URL = 'https://vkwzhwnyeaxjwkajjnyi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EAX_2y2AID9FJDBKMCdriQ_sg6RO-ju';
+const SYNC_ENABLED = /^https:\/\/.+\.supabase\.co/.test(SUPABASE_URL) && SUPABASE_KEY.length > 20;
 
 // SVG path data for inline icons (built via createElementNS — no innerHTML).
 const P_CAL = "M7 2v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 6v10H5V8h14z";
@@ -308,6 +431,8 @@ const P_PERSON = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-8 1.7-8 5v1h16v
 const P_LINK = "M3.9 12a3.1 3.1 0 0 1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7A3.1 3.1 0 0 1 3.9 12zM8 13h8v-2H8v2zm9-6h-4v1.9h4a3.1 3.1 0 0 1 0 6.2h-4V17h4a5 5 0 0 0 0-10z";
 const P_DOC = "M5 3h9l5 5v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm8 1.5V9h4.5L13 4.5zM7 12h10v1.6H7V12zm0 3.5h10V17H7v-1.5z";
 const P_PAUSE = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
+const P_CARET_RIGHT = "M10 7l5 5-5 5z";
+const P_CARET_DOWN = "M7 10l5 5 5-5z";
 
 // ---------------- State ----------------
 let stream = null, mediaRecorder = null, recording = false;
@@ -391,12 +516,6 @@ function toast(msg) {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1900);
 }
 
-// ---------------- Clock ----------------
-function tickClock() {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-setInterval(tickClock, 10000); tickClock();
-
 // ---------------- Home ----------------
 function fmtDate(iso) {
   if (!iso) return '';
@@ -434,18 +553,48 @@ async function renderPendingBanner() {
   homeHead.after(banner);
 }
 
+// ---------------- Day-wise agenda ----------------
+let currentView = 'agenda';   // 'agenda' | 'unscheduled'
+let doneExpanded = false;
+
+function activeTasks() { return loadTasks().filter(t => !t.deleted); }  // hide tombstones from all views
+
+function localDateKey(d) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+function todayKey() { return localDateKey(new Date()); }
+function dayDiff(dateKey) {
+  const a = new Date(dateKey + 'T00:00:00'), b = new Date(todayKey() + 'T00:00:00');
+  return Math.round((a - b) / 86400000);
+}
+function relativeAge(dateKey) {
+  const diff = -dayDiff(dateKey);
+  if (diff <= 0) return '';
+  if (diff === 1) return '1 day ago';
+  if (diff < 7) return diff + ' days ago';
+  return fmtDate(dateKey);
+}
+
+function dayHead(label, sub, overdue) {
+  const h = el('div', 'day-head' + (overdue ? ' overdue' : ''));
+  h.appendChild(el('span', 'dh-label', label));
+  if (sub) h.appendChild(el('span', 'dh-date', sub));
+  return h;
+}
+
 function renderHome() {
   document.getElementById('homeDate').textContent =
     new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('homeTitle').textContent = currentView === 'unscheduled' ? 'Unscheduled' : 'Agenda';
+  document.querySelectorAll('#viewToggle .vt-btn').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
 
   renderPendingBanner(); // async, non-blocking
   const body = document.getElementById('homeBody');
   body.textContent = '';
-  const tasks = loadTasks();
-  const open = tasks.filter(t => t.status !== 'completed');
-  const done = tasks.filter(t => t.status === 'completed');
 
-  if (open.length === 0 && done.length === 0) {
+  const all = activeTasks();
+  if (!all.length) {
     const es = el('div', 'empty-state');
     es.appendChild(el('div', 'es-title', 'Nothing captured yet'));
     es.appendChild(el('p', null, "Tap the mic and think out loud. We'll turn it into a task list you can confirm."));
@@ -453,12 +602,68 @@ function renderHome() {
     return;
   }
 
-  const dated = open.filter(t => t.due_date).sort((a, b) => a.due_date.localeCompare(b.due_date));
-  const someday = open.filter(t => !t.due_date);
+  if (currentView === 'unscheduled') renderUnscheduled(body, all);
+  else renderAgenda(body, all);
+}
 
-  dated.forEach(t => body.appendChild(taskCard(t)));
-  if (someday.length) { body.appendChild(el('div', 'section-label', 'Someday')); someday.forEach(t => body.appendChild(taskCard(t))); }
-  if (done.length)   { body.appendChild(el('div', 'section-label', 'Done'));    done.forEach(t => body.appendChild(taskCard(t))); }
+function renderAgenda(body, all) {
+  const open = all.filter(t => t.status !== 'completed');
+  const done = all.filter(t => t.status === 'completed');
+  const tk = todayKey();
+
+  const overdue = open.filter(t => t.due_date && t.due_date < tk).sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const upcoming = open.filter(t => t.due_date && t.due_date >= tk).sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const undated = open.filter(t => !t.due_date);
+
+  if (overdue.length) {
+    body.appendChild(dayHead('Overdue', overdue.length + ' task' + (overdue.length === 1 ? '' : 's'), true));
+    overdue.forEach(t => body.appendChild(taskCard(t, { overdue: true })));
+  }
+
+  let curKey = null;
+  upcoming.forEach(t => {
+    if (t.due_date !== curKey) {
+      curKey = t.due_date;
+      const d = new Date(curKey + 'T00:00:00');
+      const diff = dayDiff(curKey);
+      const label = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'long' });
+      const sub = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      body.appendChild(dayHead(label, sub, false));
+    }
+    body.appendChild(taskCard(t));
+  });
+
+  if (!overdue.length && !upcoming.length) {
+    const hint = el('div', 'empty-hint',
+      undated.length ? 'No dated tasks — you have ' + undated.length + ' in Unscheduled.' : 'No dated tasks yet. Tap the mic to add some.');
+    hint.style.marginTop = '30px';
+    body.appendChild(hint);
+  }
+
+  if (done.length) {
+    const dt = el('div', 'done-toggle');
+    dt.appendChild(svgIcon(doneExpanded ? P_CARET_DOWN : P_CARET_RIGHT));
+    dt.appendChild(el('span', null, 'Done (' + done.length + ')'));
+    dt.onclick = () => { doneExpanded = !doneExpanded; renderHome(); };
+    body.appendChild(dt);
+    if (doneExpanded) {
+      done.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
+      done.forEach(t => body.appendChild(taskCard(t)));
+    }
+  }
+}
+
+function renderUnscheduled(body, all) {
+  const open = all.filter(t => t.status !== 'completed' && !t.due_date);
+  if (!open.length) {
+    const es = el('div', 'empty-state');
+    es.appendChild(el('div', 'es-title', 'Nothing unscheduled'));
+    es.appendChild(el('p', null, 'Tasks without a day land here. Give one a date and it moves into your agenda.'));
+    body.appendChild(es);
+    return;
+  }
+  body.appendChild(dayHead('Unscheduled', open.length + ' task' + (open.length === 1 ? '' : 's'), false));
+  open.forEach(t => body.appendChild(taskCard(t)));
 }
 
 function chip(cls, iconPath, text) {
@@ -468,16 +673,18 @@ function chip(cls, iconPath, text) {
   return c;
 }
 
-function taskCard(t) {
+function taskCard(t, opts) {
+  opts = opts || {};
   const card = el('div', 'task-card' + (t.status === 'completed' ? ' completed' : ''));
   const check = el('div', 'check' + (t.status === 'completed' ? ' done' : ''));
-  check.onclick = () => toggleComplete(t.id);
+  check.onclick = (e) => { e.stopPropagation(); toggleComplete(t.id); };
 
   const main = el('div', 'task-main');
   main.appendChild(el('div', 'task-title', t.title));
   const meta = el('div', 'task-meta');
 
-  if (t.due_date) meta.appendChild(chip('chip date', P_CAL, t.due_label || fmtDate(t.due_date)));
+  if (opts.overdue) meta.appendChild(chip('chip date overdue-chip', P_CAL, relativeAge(t.due_date) || (t.due_label || fmtDate(t.due_date))));
+  else if (t.due_date) meta.appendChild(chip('chip date', P_CAL, t.due_label || fmtDate(t.due_date)));
   if (t.priority && t.priority !== 'low') meta.appendChild(el('span', 'chip ' + prioClass(t.priority), prioLabel(t.priority)));
   (t.collaborators || []).forEach(name => meta.appendChild(chip('chip', P_PERSON, name)));
   (t.dependencies || []).forEach(dep => {
@@ -487,6 +694,7 @@ function taskCard(t) {
 
   main.appendChild(meta);
   card.appendChild(check); card.appendChild(main);
+  card.onclick = () => openTaskSheet(t.id);
   return card;
 }
 
@@ -495,7 +703,43 @@ function toggleComplete(id) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.status = t.status === 'completed' ? 'open' : 'completed';
+  t.updated_at = new Date().toISOString();
   saveTasks(tasks); renderHome();
+  pushTasks([t]);
+}
+
+// ---------------- Task detail sheet (reschedule / priority / done / delete) ----------------
+let sheetTask = null;
+
+// Write the edited task back to the store, bump updated_at, re-render, and sync.
+function commitTask(t) {
+  const tasks = loadTasks();
+  const i = tasks.findIndex(x => x.id === t.id);
+  if (i < 0) return;
+  t.updated_at = new Date().toISOString();
+  tasks[i] = t;
+  saveTasks(tasks);
+  renderHome();
+  pushTasks([t]);
+}
+
+function openTaskSheet(id) {
+  const t = loadTasks().find(x => x.id === id);
+  if (!t) return;
+  sheetTask = t;
+  document.getElementById('tsTitle').textContent = t.title;
+  document.getElementById('tsDate').value = t.due_date || '';
+  paintSheetPrio();
+  document.getElementById('tsDone').textContent = t.status === 'completed' ? 'Mark as open' : 'Mark done';
+  document.getElementById('taskSheet').hidden = false;
+}
+function closeTaskSheet() { document.getElementById('taskSheet').hidden = true; sheetTask = null; }
+
+function paintSheetPrio() {
+  const pill = document.getElementById('tsPrio');
+  const p = sheetTask ? sheetTask.priority : 'medium';
+  pill.className = 'prio-pill ' + (p === 'high' ? 'high' : p === 'medium' ? 'med' : 'low');
+  pill.textContent = prioLabel(p);
 }
 
 // ---------------- Waveform bars ----------------
@@ -1028,9 +1272,9 @@ function confirmAll() {
   if (!allToSave.length) { showScreen('home'); renderHome(); return; }
   const tasks = loadTasks();
   const nowISO = new Date().toISOString();
-  allToSave.forEach(t => {
+  const created = allToSave.map(t => {
     const unverified = (t.due_date && t.due_confidence < CONF_THRESHOLD) || t.priority_confidence < CONF_THRESHOLD || t.owner_confidence < CONF_THRESHOLD;
-    tasks.push({
+    return {
       id: t.id,
       title: t.title,
       description: t.description,
@@ -1044,18 +1288,170 @@ function confirmAll() {
       source_transcript: t.source_transcript,
       recorded_at: (recordingStartedAt || new Date()).toISOString(),
       created_at: nowISO,
+      updated_at: nowISO,
       confidence: { overall: t.overall_confidence, due: t.due_confidence, priority: t.priority_confidence, owner: t.owner_confidence },
       unverified: !!unverified,
-    });
+    };
   });
+  created.forEach(t => tasks.push(t));
   saveTasks(tasks);
   const n = allToSave.length;
   confirmedTasks = []; reviewTasks = []; segments = []; lastTranscript = '';
   showScreen('home'); renderHome();
   toast(n + ' task' + (n === 1 ? '' : 's') + ' saved');
+  pushTasks(created);
 }
 
 function discardBatch() { confirmedTasks = []; reviewTasks = []; segments = []; lastTranscript = ''; showScreen('home'); renderHome(); }
+
+// ---------------- Sync layer ----------------
+let supa = null, sessionUser = null, syncState = 'off';
+
+function loadQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; } catch { return []; } }
+function queueIds(ids) {
+  const q = new Set(loadQueue());
+  ids.forEach(id => q.add(id));
+  localStorage.setItem(QUEUE_KEY, JSON.stringify([...q]));
+}
+
+function setSyncState(s) { syncState = s; updateSyncUI(); }
+function updateSyncUI() {
+  const btn = document.getElementById('syncBtn');
+  const label = document.getElementById('syncLabel');
+  if (!SYNC_ENABLED) { btn.hidden = true; return; }
+  btn.hidden = false;
+  if (!sessionUser) { btn.dataset.state = 'off'; label.textContent = 'Sync'; }
+  else if (syncState === 'syncing') { btn.dataset.state = 'syncing'; label.textContent = 'Syncing…'; }
+  else if (syncState === 'error') { btn.dataset.state = 'off'; label.textContent = 'Retry sync'; }
+  else { btn.dataset.state = 'synced'; label.textContent = 'Synced'; }
+}
+
+function initSync() {
+  updateSyncUI();
+  if (!SYNC_ENABLED) return;
+  if (!window.supabase || !window.supabase.createClient) { console.warn('Supabase library failed to load'); return; }
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  supa.auth.getSession().then(({ data }) => onSession(data.session));
+  supa.auth.onAuthStateChange((_evt, session) => onSession(session));
+}
+
+function onSession(session) {
+  const was = sessionUser && sessionUser.id;
+  sessionUser = (session && session.user) || null;
+  updateSyncUI();
+  if (sessionUser) {
+    if (document.getElementById('authSheet').hidden === false) showAuthView('signedIn');
+    flushQueue().then(syncPull);
+  } else if (was) {
+    updateSyncUI();
+  }
+}
+
+// Pull remote rows and merge with local (newest edit wins per task id).
+async function syncPull() {
+  if (!supa || !sessionUser) return;
+  setSyncState('syncing');
+  const { data, error } = await supa.from('tasks').select('id,data,updated_at').eq('user_id', sessionUser.id);
+  if (error) { setSyncState('error'); return; }
+
+  const byId = {};
+  loadTasks().forEach(t => { byId[t.id] = t; });
+
+  const remoteStamp = {};
+  (data || []).forEach(row => {
+    const r = row.data || {};
+    r.id = r.id || row.id;
+    r.updated_at = r.updated_at || row.updated_at;
+    remoteStamp[r.id] = row.updated_at || '';
+    const local = byId[r.id];
+    if (!local || (r.updated_at || '') >= (local.updated_at || '')) byId[r.id] = r;
+  });
+
+  const merged = Object.values(byId);
+  saveTasks(merged);
+  renderHome();
+
+  // Push anything the server is missing or that we edited more recently.
+  const toPush = merged.filter(t => {
+    const rem = remoteStamp[t.id];
+    return rem === undefined || (t.updated_at || '') > rem;
+  });
+  if (toPush.length) await pushRows(toPush);
+  setSyncState('synced');
+}
+
+async function pushRows(tasks) {
+  const rows = tasks.map(t => ({
+    id: t.id,
+    user_id: sessionUser.id,
+    data: t,
+    updated_at: t.updated_at || new Date().toISOString(),
+  }));
+  const { error } = await supa.from('tasks').upsert(rows);
+  if (error) { queueIds(tasks.map(t => t.id)); setSyncState('error'); return false; }
+  return true;
+}
+
+// Public helper called from mutations. Optimistic; queues if offline/signed-out.
+async function pushTasks(tasks) {
+  if (!SYNC_ENABLED || !tasks.length) return;
+  if (!supa || !sessionUser) { queueIds(tasks.map(t => t.id)); return; }
+  setSyncState('syncing');
+  const ok = await pushRows(tasks);
+  if (ok) setSyncState('synced');
+}
+
+async function flushQueue() {
+  if (!supa || !sessionUser) return;
+  const ids = loadQueue();
+  if (!ids.length) return;
+  const local = loadTasks();
+  const tasks = ids.map(id => local.find(t => t.id === id)).filter(Boolean);
+  localStorage.removeItem(QUEUE_KEY);
+  if (tasks.length) await pushRows(tasks);
+}
+
+// ---------------- Auth sheet ----------------
+function showAuthView(view) {
+  document.getElementById('authSignedOut').hidden = view !== 'signedOut';
+  document.getElementById('authSent').hidden = view !== 'sent';
+  document.getElementById('authSignedIn').hidden = view !== 'signedIn';
+}
+function openAuth() {
+  if (!supa) { toast('Sync is unavailable right now'); return; }
+  if (sessionUser) {
+    document.getElementById('authWho').textContent = 'Signed in as ' + (sessionUser.email || 'your account') + '.';
+    showAuthView('signedIn');
+  } else {
+    showAuthView('signedOut');
+  }
+  document.getElementById('authSheet').hidden = false;
+}
+function closeAuth() { document.getElementById('authSheet').hidden = true; }
+
+async function sendMagicLink() {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email || !/.+@.+\..+/.test(email)) { toast('Enter a valid email'); return; }
+  const btn = document.getElementById('authSend');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await supa.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: location.origin + location.pathname },
+  });
+  btn.disabled = false; btn.textContent = 'Send magic link';
+  if (error) { toast(error.message || 'Could not send link'); return; }
+  document.getElementById('authSentMsg').textContent =
+    'We sent a link to ' + email + '. Open it on this or any device to sign in — you can close this.';
+  showAuthView('sent');
+}
+
+async function signOut() {
+  await supa.auth.signOut();
+  sessionUser = null;
+  updateSyncUI();
+  closeAuth();
+  toast('Signed out — tasks stay on this device');
+}
 
 // ---------------- Wire up ----------------
 document.getElementById('fab').onclick = startRecording;
@@ -1072,7 +1468,70 @@ document.getElementById('confirmAll').onclick = confirmAll;
 document.getElementById('discardBatch').onclick = discardBatch;
 document.getElementById('removeAudio').onclick = removeAudio;
 
+// Day-view toggle
+document.querySelectorAll('#viewToggle .vt-btn').forEach(b => {
+  b.onclick = () => { currentView = b.dataset.view; doneExpanded = false; renderHome(); };
+});
+
+// Task detail sheet
+document.getElementById('tsTitle').addEventListener('blur', () => {
+  if (!sheetTask) return;
+  const v = document.getElementById('tsTitle').textContent.trim();
+  if (v && v !== sheetTask.title) { sheetTask.title = v; commitTask(sheetTask); }
+});
+document.getElementById('tsDate').onchange = () => {
+  if (!sheetTask) return;
+  const v = document.getElementById('tsDate').value;
+  sheetTask.due_date = v || null;
+  sheetTask.due_label = sheetTask.due_date ? fmtDate(sheetTask.due_date) : '';
+  commitTask(sheetTask);
+};
+document.getElementById('tsClear').onclick = () => {
+  if (!sheetTask) return;
+  sheetTask.due_date = null; sheetTask.due_label = '';
+  document.getElementById('tsDate').value = '';
+  commitTask(sheetTask);
+};
+document.getElementById('tsPrio').onclick = () => {
+  if (!sheetTask) return;
+  const o = ['low', 'medium', 'high'];
+  sheetTask.priority = o[(o.indexOf(sheetTask.priority) + 1) % 3];
+  paintSheetPrio();
+  commitTask(sheetTask);
+};
+document.getElementById('tsDone').onclick = () => {
+  if (!sheetTask) return;
+  sheetTask.status = sheetTask.status === 'completed' ? 'open' : 'completed';
+  document.getElementById('tsDone').textContent = sheetTask.status === 'completed' ? 'Mark as open' : 'Mark done';
+  commitTask(sheetTask);
+};
+document.getElementById('tsDelete').onclick = () => {
+  if (!sheetTask) return;
+  sheetTask.deleted = true;          // soft-delete tombstone so the removal syncs across devices
+  commitTask(sheetTask);
+  closeTaskSheet();
+  toast('Task deleted');
+};
+document.getElementById('tsClose').onclick = closeTaskSheet;
+document.getElementById('taskSheet').addEventListener('click', e => { if (e.target.id === 'taskSheet') closeTaskSheet(); });
+
+// Auth sheet
+document.getElementById('syncBtn').onclick = openAuth;
+document.getElementById('authSend').onclick = sendMagicLink;
+document.getElementById('authEmail').addEventListener('keydown', e => { if (e.key === 'Enter') sendMagicLink(); });
+document.getElementById('authCancel').onclick = closeAuth;
+document.getElementById('authSentClose').onclick = closeAuth;
+document.getElementById('authCloseIn').onclick = closeAuth;
+document.getElementById('authSignout').onclick = signOut;
+document.getElementById('authSheet').addEventListener('click', e => { if (e.target.id === 'authSheet') closeAuth(); });
+
+// Refresh-based sync: re-pull when the app regains focus / comes back online
+window.addEventListener('focus', () => { if (sessionUser) syncPull(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && sessionUser) syncPull(); });
+window.addEventListener('online', () => { if (sessionUser) flushQueue().then(syncPull); });
+
 renderHome();
+initSync();
 </script>
 </body>
 </html>
