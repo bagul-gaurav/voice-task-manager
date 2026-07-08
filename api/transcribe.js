@@ -34,7 +34,13 @@ export default async function handler(req, res) {
     }
 
     const mime = (req.headers['content-type'] || 'audio/webm').split(';')[0].trim();
-    const ext = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
+    const ext =
+      mime.includes('wav') ? 'wav' :
+      mime.includes('mp4') || mime.includes('m4a') ? 'm4a' :
+      mime.includes('mpeg') || mime.includes('mp3') ? 'mp3' :
+      mime.includes('ogg') || mime.includes('opus') ? 'ogg' :
+      mime.includes('flac') ? 'flac' :
+      'webm';
 
     const form = new FormData();
     form.append('file', new Blob([audio], { type: mime }), `segment.${ext}`);
