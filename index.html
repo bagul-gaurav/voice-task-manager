@@ -583,9 +583,13 @@ function finishRecording() {
 
 // ---------------- Processing pipeline ----------------
 async function transcribeSegment(blob) {
-  const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'Content-Type': blob.type || 'audio/webm' }, body: blob });
+  const ct = (blob.type || 'audio/webm').split(';')[0];
+  const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'Content-Type': ct }, body: blob });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Transcription failed.');
+  if (!res.ok) {
+    const reason = data.detail?.message || data.detail?.code || data.error || 'Transcription failed.';
+    throw new Error(reason);
+  }
   return data.transcript || '';
 }
 
