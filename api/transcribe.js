@@ -39,8 +39,8 @@ export default async function handler(req, res) {
     const form = new FormData();
     form.append('file', new Blob([audio], { type: mime }), `segment.${ext}`);
     form.append('model', 'saaras:v3');
-    form.append('mode', 'translate');        // Saaras translate -> English text
-    form.append('language_code', 'unknown'); // auto-detect source language
+    form.append('mode', 'translate');
+    form.append('language_code', 'unknown');
 
     const upstream = await fetch('https://api.sarvam.ai/speech-to-text', {
       method: 'POST',
