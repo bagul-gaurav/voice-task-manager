@@ -582,13 +582,25 @@ function finishRecording() {
 }
 
 // ---------------- Processing pipeline ----------------
+// Dig the real message out of Sarvam's error, whatever the nesting.
+// Our proxy wraps it as { error, detail }, and detail can be
+// { message }, { code }, or { error: { message, code } }.
+function apiReason(data, fallback) {
+  const d = data && data.detail;
+  const nested =
+    (d && (d.message || d.code)) ||
+    (d && d.error && (d.error.message || d.error.code)) ||
+    (typeof d === 'string' ? d : null);
+  return nested || (data && data.error) || fallback;
+}
+
 async function transcribeSegment(blob) {
   const ct = (blob.type || 'audio/webm').split(';')[0];
   const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'Content-Type': ct }, body: blob });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const reason = data.detail?.message || data.detail?.code || data.error || 'Transcription failed.';
-    throw new Error(reason);
+    // Append the exact format we sent — crucial for diagnosing phone vs. desktop audio.
+    throw new Error(apiReason(data, 'Transcription failed.') + '  ·  (sent as ' + ct + ')');
   }
   return data.transcript || '';
 }
@@ -596,7 +608,7 @@ async function transcribeSegment(blob) {
 async function extractTasks(transcript, recordedAt) {
   const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript, recorded_at: recordedAt }) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Extraction failed.');
+  if (!res.ok) throw new Error(apiReason(data, 'Extraction failed.'));
   return data.tasks || [];
 }
 
